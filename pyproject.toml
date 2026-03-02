@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lenstool-quickstart"
+version = "0.1.0"
+description = "Quick-start lens modeling from DECaLS survey imaging data"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Erik Solhaug", email = "erik@example.com"},
+]
+keywords = ["lens-modeling", "decals", "gravitational-lensing", "astronomy"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
+dependencies = [
+    "numpy>=1.20.0",
+    "scipy>=1.7.0",
+    "astropy>=5.0",
+    "matplotlib>=3.4.0",
+    "scikit-image>=0.18.0",
+    "requests>=2.28.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov>=2.12.0",
+    "black>=21.0",
+    "flake8>=3.9.0",
+    "isort>=5.9.0",
+]
+docs = [
+    "sphinx>=4.0",
+    "sphinx-rtd-theme>=1.0",
+    "nbsphinx>=0.8.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/lenstool-quickstart"
+Documentation = "https://lenstool-quickstart.readthedocs.io"
+Repository = "https://github.com/yourusername/lenstool-quickstart.git"
+Issues = "https://github.com/yourusername/lenstool-quickstart/issues"
+
+[tool.setuptools]
+packages = ["lenstool_quickstart"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "--cov=lenstool_quickstart --cov-report=html --cov-report=term-missing"

@@ -1,21 +1,6 @@
 # lenstool-quickstart
 
-A complete toolkit for gravitational lens modeling using DECaLS survey imaging data. This package handles everything from fetching data to building lens models, so you can focus on the science.
-
-## What This Package Does
-
-- **Fetch imaging data** from the DECaLS survey for any region of the sky
-- **Preprocess images** automatically (smooth, normalize, etc.)
-- **Build lens models** using gravitational lensing theory
-- **Visualize results** with publication-quality plots
-
-## Prerequisites
-
-Before you start, make sure you have:
-- **macOS, Linux, or WSL** (Windows with Linux subsystem)
-- **Python 3.8 or higher** (check with `python --version`)
-- **Git** (for cloning the repository)
-- **Anaconda or Miniconda** (for creating the conda environment)
+A toolkit for getting quickly set up with a lens model using DECaLS survey imaging data (or any existing imaging data at your disposal) with Lenstool. This package handles everything from fetching data to building lens models, so you can focus on the science. Below, I only describe the steps for making a red sequence catalog, but be aware that there are some scripts here that have other useful purposes you may want to check out. These live in `./lenstool_quickstart/`.
 
 ## Installation & Setup
 

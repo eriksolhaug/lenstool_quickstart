@@ -1,0 +1,77 @@
+# Template lenstool configuration for COOLJ0221
+# See http://projets.lam.fr/projects/lenstool for full documentation
+#
+# This is a starting template. Parameters will need to be adjusted
+# based on your analysis and observations.
+
+# ============================================================================
+# IMAGE PROPERTIES
+# ============================================================================
+
+image {
+    pixel_size 0.262       # DECaLS pixel size in arcsec
+    xnum 300               # x dimension of images (pixels)
+    ynum 300               # y dimension of images (pixels)
+}
+
+# ============================================================================
+# BACKGROUND SOURCE MODEL
+# ============================================================================
+
+source {
+    type 0                 # 0=pointmass, 1=sphere, 2=gaussian, etc.
+    x 150.0                # Source x position (pixels)
+    y 150.0                # Source y position (pixels)
+    radius 0.1             # Source radius (arcsec)
+}
+
+# ============================================================================
+# LENS MODEL
+# ============================================================================
+
+# Main lens (adjust profile based on your needs)
+# Options: coreNFW, SIS, PIEMD, etc.
+
+potential {
+    name coreNFW           # Lens profile type
+    x 150.0                # Lens x position (pixels)
+    y 150.0                # Lens y position (pixels)
+    vx 200.0               # Velocity dispersion x component (km/s)
+    vy 200.0               # Velocity dispersion y component (km/s)
+    b0 1.0                 # Core radius (arcsec)
+    epsilon 0.3            # Ellipticity (0-1)
+    theta 0.0              # Position angle (degrees)
+}
+
+# ============================================================================
+# OPTIMIZATION PARAMETERS
+# ============================================================================
+
+optimize {
+    method levenbergmarquardt  # Optimization algorithm
+    niter 100                   # Maximum iterations
+    convergence 1e-4            # Convergence criterion
+    step_factor 0.1             # Step size factor
+}
+
+# ============================================================================
+# CONSTRAINTS
+# ============================================================================
+
+# Add constraints here to limit parameter space
+# Examples:
+# constraint {
+#     type einstein_radius
+#     min 1.0
+#     max 3.0
+# }
+
+# ============================================================================
+# OUTPUT
+# ============================================================================
+
+output {
+    file best_model.out           # Output model filename
+    image residuals.fits          # Output residual image
+    plotfile lensing.ps           # PostScript output
+}

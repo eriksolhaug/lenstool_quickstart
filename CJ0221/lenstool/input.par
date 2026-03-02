@@ -1,0 +1,115 @@
+runmode                
+	reference     3 35.2821934 -66.3871985 # reference coordinates in sexagesimal=1, degrees=3
+	arclet        1 arcs/cj0221.dat
+	inverse       3 0.5 200 # int1=0, no optimization. int1=1, parabolic optimization (float1=max number of optimizations). int1=2, Monte Carlo. int1=3, Bayesian optimization method (float1=speed of convergence, float2=number of iterations for burn-in phase).
+	sigposArcsec  0.2
+	sigpos        0.1
+	verbose       1
+	end
+image
+	multfile      1 arcs/cj0221.dat #>0=read
+	forme         0 # <0 image plane chi2. >=0 source plane chi2.
+	mult_wcs      3
+	sigposArcsec  0.2
+	critic        1 -11.968 11.630 135.876 0.18645 1.524
+	end
+grille
+	nombre        128 # Number of points of the grid used to invert lens equation
+	polaire       0 # grid radial (polar)=1, rectangular=0
+	nlentille     41 # Number of clumps making up the lensing potential (matches number of galaxies in cats/cj0221.cat)
+	nlens_crit    41 # Number of clumps for which critical lines must be calculated. Only used for SNAKE algorithm in cline, algorithm
+	nlens_opt     3 # Number of clumps that will be optimized
+	end
+# Main DM halo
+potentiel O1
+	profil       81
+	x_centre     0.00000
+	y_centre     0.00000
+	ellipticite     0.800000
+	angle_pos       60.000000
+	core_radius_kpc     50.000000
+	cut_radius_kpc     1500.000000
+	v_disp     800.0
+	z_lens     0.588
+	end
+limit 1
+	x_centre           0 -2.0 6.0 0.010
+	y_centre           0 -8.0 3.0 0.010
+	ellipticite        1  0.6 0.9 0.001
+	angle_pos          1  30. 80.0 0.100
+	core_radius_kpc    1  5.0 150.0 0.10
+	v_disp             1  300. 1000. 0.10 
+	end
+# Second line-of-sight cluster in the south
+potentiel O2
+	profil       81
+	x_centre     -9.671
+	y_centre     -96.125
+	ellipticite     0.000000
+	angle_pos       0.000000
+	core_radius_kpc     0.000001
+	cut_radius_kpc     1500.000000
+	v_disp     300.0
+	z_lens     0.588
+	end
+limit 2
+	core_radius_kpc    1  5.0 150.0 0.10
+	v_disp             1  100. 1000. 0.10
+	end
+potentiel 03
+	profil       81
+	x_centre     -9.711
+	y_centre     -16.632
+	ellipticite     0.000000
+	angle_pos       60.000000
+	core_radius_kpc     0.000001
+	cut_radius_kpc     1500.000000
+	v_disp     200.0
+	z_lens     0.588
+	end
+limit 3
+	ellipticite        1  0.0 0.6 0.001
+	angle_pos          1  50. 80.0 0.100
+	core_radius_kpc    1  5.0 150.0 0.10
+	v_disp             1  100. 500. 0.10
+	end
+potfile0
+	filein  3 cats/cj0221.cat
+	zlens   0.588
+	type    81
+	corekpc 0.150000
+	mag0    20.340000
+	sigma   1 115.415843 84.590184
+	cutkpc  1 3. 100.
+	slope   0 4.000000 0.000000
+	vdslope 0 4.000000 0.000000
+	vdscatter 0 0.000000 0.000000
+	rcutscatter 0 0.000000 0.000000
+	end
+cline
+	nplan         1 3.12 # Single background source at z=3.12
+	dmax          30.000
+	algorithm     MARCHINGSQUARES
+	limitHigh     5.0
+	limitLow      0.25
+	end
+grande
+	iso           0 0 0.000 0.000 0.000
+	name          best
+	profil        0 0
+	contour       1 0
+	large_dist    0.300
+	end
+cosmologie # Using same cosmology as in the rest of Solhaug et al. 2025
+	H0            70.000
+	omegaM        0.300
+	omegaX        0.700
+	wX           -1.000
+	end
+champ
+	xmin         -30.00
+	xmax         30.00
+	ymin         -30.00
+	ymax          30.00
+	end
+fini
