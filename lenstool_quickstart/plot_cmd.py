@@ -1,23 +1,29 @@
 #!/usr/bin/env python
 """
-Create color-magnitude diagram from dual-image SExtractor run.
-Uses z-band as detection image and measures both r and z magnitudes.
-x-axis: z-band magnitude
-y-axis: r-z color (r_mag - z_mag)
-Stars (CLASS_STAR >= 0.10) are plotted in red, galaxies in black.
+Create interactive color-magnitude diagram from dual-band source catalogs.
+
+Loads two SExtractor ASCII catalogs (detection and measurement bands),
+matches objects by NUMBER, and creates an interactive color-magnitude plot
+with stars and galaxies displayed in different colors.
+
+Uses Computer Modern Serif font if formatting_on.txt is present and set to 'true'.
+Supports matplotlib interactive mode for adjusting plot limits and zooming.
 """
 
 import os
 import sys
 import numpy as np
+import matplotlib
+matplotlib.use('MacOSX')  # Use native macOS backend for interactive display
 import matplotlib.pyplot as plt
 from astropy.io import ascii
 
 
 def latex_formatting():
-    """Apply LaTeX formatting to matplotlib plots."""
+    """Apply LaTeX formatting to matplotlib plots with Computer Modern Serif."""
     plt.rcParams['text.usetex'] = True
     plt.rcParams['font.family'] = 'serif'
+    plt.rcParams['font.serif'] = ['Computer Modern']
     plt.rcParams['font.size'] = 11
     plt.rcParams['axes.labelsize'] = 12
     plt.rcParams['axes.titlesize'] = 13
@@ -27,7 +33,14 @@ def latex_formatting():
 
 
 def should_use_latex():
-    """Check if LaTeX formatting should be applied."""
+    """Check if LaTeX formatting should be applied by looking for formatting_on.txt."""
+    # Check current working directory first
+    if os.path.exists('formatting_on.txt'):
+        with open('formatting_on.txt', 'r') as f:
+            content = f.read().strip().lower()
+            return content == 'true'
+    
+    # Then check script's parent directory
     script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     formatting_file = os.path.join(script_dir, 'formatting_on.txt')
     
@@ -40,7 +53,7 @@ def should_use_latex():
 
 
 def load_catalog(catalog_path):
-    """Load SExtractor ASCII_HEAD catalog."""
+    """Load SExtractor ASCII catalog."""
     try:
         data = ascii.read(catalog_path, format='sextractor')
         return data
@@ -49,135 +62,133 @@ def load_catalog(catalog_path):
         return None
 
 
-def match_catalogs_by_number(z_cat, r_cat):
+def match_catalogs_by_number(band1_cat, band2_cat):
     """
-    Match z-band and r-band catalogs by NUMBER column.
+    Match band1 and band2 catalogs by NUMBER column.
     Returns matched indices for both catalogs.
     """
-    z_numbers = np.array(z_cat['NUMBER'])
-    r_numbers = np.array(r_cat['NUMBER'])
+    band1_numbers = np.array(band1_cat['NUMBER'])
+    band2_numbers = np.array(band2_cat['NUMBER'])
     
-    # Find indices in r_cat that match numbers in z_cat
-    matched_z_idx = []
-    matched_r_idx = []
+    # Find indices in band2_cat that match numbers in band1_cat
+    matched_band1_idx = []
+    matched_band2_idx = []
     
-    for i, z_num in enumerate(z_numbers):
-        # Find this number in r_cat
-        r_match = np.where(r_numbers == z_num)[0]
-        if len(r_match) > 0:
-            matched_z_idx.append(i)
-            matched_r_idx.append(r_match[0])
+    for i, band1_num in enumerate(band1_numbers):
+        # Find this number in band2_cat
+        band2_match = np.where(band2_numbers == band1_num)[0]
+        if len(band2_match) > 0:
+            matched_band1_idx.append(i)
+            matched_band2_idx.append(band2_match[0])
     
-    return np.array(matched_z_idx), np.array(matched_r_idx)
+    return np.array(matched_band1_idx), np.array(matched_band2_idx)
 
 
-def plot_cmd(z_cat, r_cat, output_path=None):
+def plot_cmd(band1_cat, band2_cat, output_path=None, class_star_threshold=0.10):
     """
     Create color-magnitude diagram.
     
-    x-axis: z-band magnitude
-    y-axis: r-z color
+    x-axis: band1 magnitude
+    y-axis: band2-band1 color
     
-    Stars (CLASS_STAR >= 0.10) in red, galaxies in black.
+    Stars (CLASS_STAR >= class_star_threshold) in red, galaxies in black.
     """
-    if z_cat is None or r_cat is None:
-        print("ERROR: One or both catalogs are missing")
-        return
-    
     # Apply LaTeX formatting if enabled
     if should_use_latex():
         latex_formatting()
     
     # Match catalogs by NUMBER
-    z_idx, r_idx = match_catalogs_by_number(z_cat, r_cat)
-    
-    # Extract magnitudes and classification
-    z_mag = np.array(z_cat['MAG_ISO'][z_idx])
-    r_mag = np.array(r_cat['MAG_ISO'][r_idx])
-    class_star_z = np.array(z_cat['CLASS_STAR'][z_idx])
-    class_star_r = np.array(r_cat['CLASS_STAR'][r_idx])
+    band1_idx, band2_idx = match_catalogs_by_number(band1_cat, band2_cat)
+    band1_mag = np.array(band1_cat['MAG_ISO'][band1_idx])
+    band2_mag = np.array(band2_cat['MAG_ISO'][band2_idx])
+    class_star_band1 = np.array(band1_cat['CLASS_STAR'][band1_idx])
+    class_star_band2 = np.array(band2_cat['CLASS_STAR'][band2_idx])
     
     # Classify stars (if either band indicates star)
-    is_star = (class_star_z >= 0.10) | (class_star_r >= 0.10)
+    is_star = (class_star_band1 >= class_star_threshold) | (class_star_band2 >= class_star_threshold)
     
     # Calculate color
-    color = r_mag - z_mag
+    color = band2_mag - band1_mag
     
-    # Separate stars and galaxies
+    # Use SourceExtractor's CLASS_STAR for star-galaxy separation
     stars = is_star
     galaxies = ~is_star
-    
-    print(f"\nTotal objects: {len(z_mag)}")
-    print(f"  Stars (CLASS_STAR >= 0.10): {np.sum(stars)}")
+    print(f"\nTotal objects: {len(band1_mag)}")
+    print(f"  Stars (CLASS_STAR >= {class_star_threshold}): {np.sum(stars)}")
     print(f"  Galaxies: {np.sum(galaxies)}")
-    print(f"\nz-band magnitude range: {z_mag.min():.2f} to {z_mag.max():.2f}")
-    print(f"r-z color range: {color.min():.2f} to {color.max():.2f}")
+    print(f"\nBand1 magnitude range: {band1_mag.min():.2f} to {band1_mag.max():.2f}")
+    print(f"Band2-Band1 color range: {color.min():.2f} to {color.max():.2f}")
     
     # Create plot
     fig, ax = plt.subplots(figsize=(10, 7))
     
-    # Plot galaxies (black) first
+    # Plot galaxies as black
     if np.sum(galaxies) > 0:
-        ax.scatter(z_mag[galaxies], color[galaxies], 
-                  c='black', marker='o', s=30, alpha=0.6, label='Galaxies')
+        ax.scatter(band1_mag[galaxies], color[galaxies], 
+                  c='black', marker='o', s=30, alpha=0.6, edgecolors='none',
+                  label=rf'Galaxies (CLASS_STAR $< {class_star_threshold}$)')
     
-    # Plot stars (red) on top
+    # Plot stars as red
     if np.sum(stars) > 0:
-        ax.scatter(z_mag[stars], color[stars], 
-                  c='red', marker='*', s=200, alpha=0.8, label='Stars')
+        ax.scatter(band1_mag[stars], color[stars], 
+                  c='red', marker='+', s=50, alpha=0.8, edgecolors='none',
+                  label=rf'Stars (CLASS_STAR $>= {class_star_threshold}$)')
     
-    ax.set_xlabel('z-band Magnitude')
-    ax.set_ylabel('r-z Color')
-    ax.set_title('COOLJ0221 - Color-Magnitude Diagram (z-band detection)')
+    ax.set_xlabel('Band1 Magnitude')
+    ax.set_ylabel('Band2-Band1 Color')
+    ax.set_title('Color-Magnitude Diagram')
     ax.grid(False)
     ax.legend(loc='best', framealpha=0.9)
+    
+    # Configure ticks: inside, on all sides
+    ax.tick_params(direction='in', which='both', top=True, right=True)
+    
     plt.tight_layout()
     
+    # Save if output path provided
     if output_path:
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         print(f"\nPlot saved to: {output_path}")
-    else:
-        plt.show()
     
-    plt.close()
+    # Show interactive window (blocking on macOS)
+    print("Plot displayed. Close the window to exit.")
+    plt.show()
 
 
 if __name__ == '__main__':
-    # Default paths for dual-image workflow
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_dir = os.path.dirname(script_dir)
-    data_dir = os.path.join(project_dir, 'data', 'catalogs')
+    import argparse
     
-    # z-band catalog (z-band single image detection/measurement)
-    z_cat_path = os.path.join(data_dir, 'cj0221_sources_z.cat')
-    # r-band catalog (dual-image with z-detection, r-measurement)
-    r_cat_path = os.path.join(data_dir, 'cj0221_sources_z_rphot.cat')
-    output_path = os.path.join(project_dir, 'outputs', 'plots', 'cmd.pdf')
+    parser = argparse.ArgumentParser(description='Create color-magnitude diagram from dual-band catalogs')
+    parser.add_argument('--band1-catalog', dest='band1_catalog', required=True,
+                        help='Path to band1 (detection) catalog')
+    parser.add_argument('--band2-catalog', dest='band2_catalog', required=True,
+                        help='Path to band2 (measurement) catalog')
+    parser.add_argument('--output', required=True, help='Output plot path')
+    parser.add_argument('--class-star-threshold', dest='class_star_threshold', type=float, default=0.10,
+                        help='CLASS_STAR threshold for star/galaxy separation (default: 0.10)')
     
-    # Allow command-line override
-    if len(sys.argv) > 1:
-        z_cat_path = sys.argv[1]
-    if len(sys.argv) > 2:
-        r_cat_path = sys.argv[2]
-    if len(sys.argv) > 3:
-        output_path = sys.argv[3]
+    args = parser.parse_args()
     
-    print(f"Loading z-band catalog: {z_cat_path}")
-    z_cat = load_catalog(z_cat_path)
-    if z_cat is None:
+    band1_cat_path = args.band1_catalog
+    band2_cat_path = args.band2_catalog
+    output_path = args.output
+    
+    print(f"Loading band1 catalog: {band1_cat_path}")
+    band1_cat = load_catalog(band1_cat_path)
+    if band1_cat is None:
         sys.exit(1)
     
-    print(f"Loading r-band catalog (dual-image): {r_cat_path}")
-    r_cat = load_catalog(r_cat_path)
-    if r_cat is None:
+    print(f"Loading band2 catalog: {band2_cat_path}")
+    band2_cat = load_catalog(band2_cat_path)
+    if band2_cat is None:
         sys.exit(1)
     
-    print(f"\nz-band detections: {len(z_cat)} objects")
-    print(f"r-band measurements: {len(r_cat)} objects")
+    print(f"\nBand1 detections: {len(band1_cat)} objects")
+    print(f"Band2 measurements: {len(band2_cat)} objects")
     
     # Create output directory if needed
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
     # Create plot
     print(f"\nCreating color-magnitude diagram...")
-    plot_cmd(z_cat, r_cat, output_path)
+    plot_cmd(band1_cat, band2_cat, output_path, args.class_star_threshold)

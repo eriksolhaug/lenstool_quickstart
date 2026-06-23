@@ -95,64 +95,102 @@ def main():
         description='Extract sources with SExtractor'
     )
     parser.add_argument(
+        '--detection-image',
+        help='Full path to detection image (overrides --detection)'
+    )
+    parser.add_argument(
+        '--measure-image',
+        nargs='+',
+        help='Full path(s) to measurement image(s) (overrides --measure)'
+    )
+    parser.add_argument(
         '--detection',
         default='z',
         choices=['g', 'r', 'z'],
-        help='Detection band (default: z)'
+        help='Detection band (default: z) - ignored if --detection-image provided'
     )
     parser.add_argument(
         '--measure',
         nargs='+',
         default=['g', 'r', 'z'],
-        help='Bands to measure photometry (default: g r z)'
+        help='Bands to measure photometry (default: g r z) - ignored if --measure-image provided'
     )
     parser.add_argument(
         '--data-dir',
         default='data/imaging',
-        help='Directory with imaging data'
+        help='Directory with imaging data (for band-based mode)'
     )
     parser.add_argument(
         '--config',
         help='SExtractor configuration file'
     )
     parser.add_argument(
+        '--output',
+        help='Output catalog path'
+    )
+    parser.add_argument(
         '--output-dir',
-        default='data/catalogs',
+        default='catalogs',
         help='Output directory for catalogs'
     )
     
     args = parser.parse_args()
     
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    
-    data_dir = Path(args.data_dir)
-    
-    print("SExtractor Source Extraction")
-    print(f"  Detection image: {args.detection}-band")
-    print(f"  Measure bands: {', '.join(args.measure)}")
-    print(f"  Output directory: {output_dir}")
-    
-    # Check for input images
-    detection_image = data_dir / f"cj0221_{args.detection}.fits"
-    if not detection_image.exists():
-        print(f"\nWarning: Detection image not found: {detection_image}")
-        print("Please run fetch_decals_data.py first")
-        sys.exit(1)
+    # Determine detection image and measure images
+    if args.detection_image:
+        # Full path mode
+        detection_image = args.detection_image
+        measure_images = args.measure_image if args.measure_image else [detection_image]
+        
+        # Check that images exist
+        for img in [detection_image] + measure_images:
+            if not Path(img).exists():
+                print(f"Error: Image not found: {img}")
+                sys.exit(1)
+        
+        # Determine output catalog path
+        if args.output:
+            output_catalog = args.output
+        else:
+            output_dir = Path(args.output_dir)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            output_catalog = str(output_dir / "sources.cat")
+        
+        print("SExtractor Source Extraction")
+        print(f"  Detection image: {detection_image}")
+        print(f"  Measure images: {', '.join(measure_images)}")
+        print(f"  Output catalog: {output_catalog}")
+    else:
+        # Band-based mode (original behavior for DECaLS)
+        output_dir = Path(args.output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        data_dir = Path(args.data_dir)
+        
+        print("SExtractor Source Extraction")
+        print(f"  Detection image: {args.detection}-band")
+        print(f"  Measure bands: {', '.join(args.measure)}")
+        print(f"  Output directory: {output_dir}")
+        
+        # Check for input images
+        detection_image = data_dir / f"cj0221_{args.detection}.fits"
+        if not detection_image.exists():
+            print(f"\nWarning: Detection image not found: {detection_image}")
+            print("Please run fetch_decals_data.py first")
+            sys.exit(1)
+        
+        measure_images = [
+            str(data_dir / f"cj0221_{band}.fits") for band in args.measure
+        ]
+        
+        output_catalog = str(output_dir / "sources.cat")
     
     # Initialize SExtractor runner
     runner = SExtractorRunner(config_file=args.config)
     
-    # Extract sources
-    measure_images = [
-        str(data_dir / f"cj0221_{band}.fits") for band in args.measure
-    ]
-    
-    output_catalog = str(output_dir / "sources.cat")
-    
     try:
         runner.extract(str(detection_image), measure_images, output_catalog)
-        print(f"\nSourceExtraction complete!")
+        print(f"\nSource extraction complete!")
         print(f"Catalog: {output_catalog}")
         print("\nNext step: Filter catalog by stellarity and red sequence")
     except Exception as e:

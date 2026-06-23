@@ -136,27 +136,30 @@ def plot_image_with_objects(fits_image, header, catalog,
 
 
 if __name__ == '__main__':
+    import argparse
+    
     # Default paths
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_dir = os.path.dirname(script_dir)
     data_dir = os.path.join(project_dir, 'data')
     
-    # Use z-band image with red sequence objects from lenstool catalog
-    fits_path = os.path.join(data_dir, 'cj0221_z.fits')
-    catalog_path = os.path.join(data_dir, 'catalogs', 'cj0221_decals-dr10.cat')
-    output_path = os.path.join(project_dir, 'outputs', 'plots', 'detections_z.pdf')
+    # Default catalog paths
+    default_fits = os.path.join(data_dir, 'cj0221_z.fits')
+    default_catalog = os.path.join(data_dir, 'catalogs', 'cj0221_decals-dr10.cat')
+    default_output = os.path.join(project_dir, 'outputs', 'plots', 'detections_z.pdf')
     
-    circle_radius = 10
+    parser = argparse.ArgumentParser(description='Visualize detected objects on FITS image')
+    parser.add_argument('--image', default=default_fits, help='Path to FITS image')
+    parser.add_argument('--catalog', default=default_catalog, help='Path to source catalog')
+    parser.add_argument('--output', default=default_output, help='Output image path')
+    parser.add_argument('--radius', type=float, default=10, help='Circle radius in pixels')
     
-    # Allow command-line overrides
-    if len(sys.argv) > 1:
-        fits_path = sys.argv[1]
-    if len(sys.argv) > 2:
-        catalog_path = sys.argv[2]
-    if len(sys.argv) > 3:
-        output_path = sys.argv[3]
-    if len(sys.argv) > 4:
-        circle_radius = float(sys.argv[4])
+    args = parser.parse_args()
+    
+    fits_path = args.image
+    catalog_path = args.catalog
+    output_path = args.output
+    circle_radius = args.radius
     
     print(f"Loading FITS image: {fits_path}")
     fits_image, header = load_fits_image(fits_path)

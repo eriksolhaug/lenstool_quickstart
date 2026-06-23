@@ -1,0 +1,37 @@
+# SExtractor configuration for DECaLS lens imaging
+# This is a template - adjust parameters based on your specific images
+
+# Detect image parameters
+DETECT_TYPE         CCD             # Detection type (CCD)
+DETECT_MINAREA      5               # Minimum detection area (pixels)
+DETECT_THRESH       1.5             # Detection threshold (sigma)
+ANALYSIS_THRESH     1.5             # Analysis threshold
+
+# Photometry
+PHOT_APERTURES      10,15,20,30     # Aperture radii (pixels)
+PHOT_AUTOPARAMS     2.5, 3.5        # Kron aperture parameters
+
+# Star/galaxy classification
+SEEING_FWHM         1.0             # Seeing FWHM (pixels) - UPDATE FOR YOUR IMAGES
+STARNNW_NAME        ../data/cj0221_default.nnw     # Neural network file
+
+# Background estimation
+BACK_SIZE           64              # Background mesh size (pixels)
+BACK_FILTERSIZE     3               # Background filter size
+
+# Deblending
+DEBLEND_NTHRESH     32              # Deblending threshold
+DEBLEND_MINCONT     0.005           # Minimum deblending contrast
+
+# Flags
+FLAG_IMAGE          flag.fits       # Flag image (if available)
+
+# Output catalog format
+CATALOG_TYPE        ASCII_HEAD      # Catalog format
+CATALOG_NAME        sources.cat     # Output catalog
+
+# Columns to output
+PARAMETERS_NAME     ../data/cj0221_default.param   # Parameters file
+
+# Other
+PIXEL_SCALE         0.262           # Pixel scale (arcsec/pixel) - DECaLS value
